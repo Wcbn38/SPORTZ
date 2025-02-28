@@ -1,0 +1,5 @@
+# Security files
+security.json
+
+# NPM
+node_modules/
