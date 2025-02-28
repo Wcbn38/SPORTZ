@@ -1,0 +1,20 @@
+.server-button {
+    width: 300px;
+    white-space: nowrap;
+    font-family: Consolas, monaco, monospace;
+    font-weight: bold;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.greyed {
+    color: grey;
+}
+
+table, th, td {
+    border: 1px solid black;
+    min-width: 250px;
+    text-align: center;
+}

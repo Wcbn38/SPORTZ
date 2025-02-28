@@ -1,0 +1,1 @@
+export var game_list = {}

@@ -1,5 +1,6 @@
 # Security files
 security.json
+*.pem
 
 # NPM
 node_modules/
