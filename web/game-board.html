@@ -1,20 +1,6 @@
 <!DOCTYPE html>
+<script src="/utilities.js"></script>
 <script>
-    function mapWebPrms(prms) {
-        if (prmArray != "") {
-            var prmArray = prms.split("&")
-            return prmArray.reduce((m, e) => {
-                var splt = e.split("=")
-                if (splt.length == 2) {
-                    m[splt[0]] = splt[1]
-                }
-                return m
-            }, {})
-        } else {
-            return {}
-        }
-    }
-
     function loadServers() {
         document.getElementById("loader").style.display = 'block'
         cookieMap = mapWebPrms(document.cookie)
@@ -26,7 +12,7 @@
             method: "POST",
             body: "",
             headers: {
-                "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "Content-type": "text/plain; charset=UTF-8",
                 "Content-Length": 0,
                 "Cookies": cookieMap["pwd"]
             }
@@ -46,7 +32,6 @@
             json.forEach(el => {
                 const playerEl = document.createElement("tr")
 
-                nel = document.createElement("th")
                 playerEl.appendChild(document.createElement("th")).innerHTML = el["username"]
                 playerEl.appendChild(document.createElement("td")).innerHTML = el["vote"]
                 playerEl.appendChild(document.createElement("td")).innerHTML = json.map(e => e['vote'] == el['id']).filter(e => e).length
@@ -57,7 +42,38 @@
 
                 playerSection.appendChild(playerEl)
             });
+
+            let blankVote = playerSection.appendChild(document.createElement("tr"))
+            blankVote.appendChild(document.createElement("th")).innerHTML = "Blank"
+            blankVote.appendChild(document.createElement("td")).innerHTML = "N/A"
+            blankVote.appendChild(document.createElement("td")).innerHTML = json.map(e => e['vote'] == null).filter(e => e).length
+
+            playerSection.appendChild(blankVote)
         });
+    }
+
+    function startGame() {
+        fetch(`${document.location.origin}/game-start?gameid=${argsMap["gameid"]}`, {
+            method: "POST",
+            body: "",
+            headers: {
+                "Content-type": "text/plain; charset=UTF-8",
+                "Content-Length": 0,
+                "Cookies": cookieMap["pwd"]
+            }
+        })
+    }
+
+    function setVoteEnable(value) {
+        fetch(`${document.location.origin}/game-status?gameid=${argsMap["gameid"]}&enabled=${value}`, {
+            method: "POST",
+            body: "",
+            headers: {
+                "Content-type": "text/plain; charset=UTF-8",
+                "Content-Length": 0,
+                "Cookies": cookieMap["pwd"]
+            }
+        })
     }
 </script>
 <html>
@@ -68,10 +84,10 @@
         <link rel="stylesheet" type="text/css" href="loader.css">
         <link rel="stylesheet" type="text/css" href="admin-general.css">
         <div style="padding: 20px; width: 500px; display: grid; grid-template-columns: auto auto auto auto auto;">
-            <button style="width: 120px; margin: 15px;">Start game</button>
-            <button style="width: 120px; margin: 15px; background-color: green;">Start vote</button>
-            <button style="width: 120px; margin: 15px; background-color: red;">End vote</button>
-            <button style="width: 120px; margin: 15px;" onclick="loadServers()">Refresh</button>
+            <button onclick="startGame()" style="width: 120px; margin: 15px;">Start game</button>
+            <button onclick="setVoteEnable(true)" style="width: 120px; margin: 15px; background-color: green;">Start vote</button>
+            <button onclick="setVoteEnable(false)" style="width: 120px; margin: 15px; background-color: red;">End vote</button>
+            <button onclick="loadServers()" style="width: 120px; margin: 15px;">Refresh</button>
             <div style="display: inline-block; margin-left: 8px; margin-top: 10px;" class="loader" id="loader"></div>
         </div>
     </head>

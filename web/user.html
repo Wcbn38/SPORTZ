@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<script src="/utilities.js"></script>
+<script>
+    function onVoteSelection(selector) {
+        let playerTable = document.getElementById("players")
+        let inputTable = playerTable.getElementsByTagName("input")
+
+        for (let pRow of inputTable) {
+            if (pRow.value != selector.srcElement.value)
+                pRow.checked = false
+        }
+        
+        body = selector.srcElement.checked ? selector.srcElement.value.toString() : "null"
+        fetch(`${document.location.origin}/user-vote-request?gameid=${argsMap["gameid"]}&userid=${argsMap["userid"]}&pwd=${argsMap["pwd"]}`, {
+            method: "POST",
+            body: selector.srcElement.checked ? selector.srcElement.value : "null",
+            headers: {
+                "Content-type": "text/plain; charset=UTF-8",
+                "Content-Length": body.length,
+                "Cookies": cookieMap["pwd"]
+            }
+        })
+    }
+
+    function loadServers() {
+        document.getElementById("loader").style.display = 'block'
+        cookieMap = mapWebPrms(document.cookie)
+
+        args = document.location.href.split('?')[1]
+        argsMap = mapWebPrms(args)
+
+        fetch(`${document.location.origin}/user-game-properties?gameid=${argsMap["gameid"]}&userid=${argsMap["userid"]}&pwd=${argsMap["pwd"]}`, {
+            method: "POST",
+            body: "",
+            headers: {
+                "Content-type": "text/plain; charset=UTF-8",
+                "Content-Length": 0,
+                "Cookies": cookieMap["pwd"]
+            }
+        })
+        .then((response) => response.json())
+        .then((json) => {
+            document.getElementById("loader").style.display = 'none'
+
+            let playerSection = document.getElementById("players")
+            playerSection.innerHTML = ''
+
+            json.forEach(el => {
+                const playerEl = document.createElement("tr")
+
+                let voteSelector = document.createElement("input")
+                voteSelector.type = "checkbox"
+                voteSelector.value = el["id"]
+                voteSelector.onchange = onVoteSelection
+                voteSelector.onchange.arguments = voteSelector
+
+                playerEl.appendChild(voteSelector)
+
+                playerEl.appendChild(document.createElement("th")).innerHTML = el["username"]
+
+                if (el["dead"]) {
+                    playerEl.classList.add("greyed")
+                    voteSelector.disabled = true
+                }
+
+                playerSection.appendChild(playerEl)
+            });
+        });
+    }
+</script>
+<html>
+    <head>
+        <title>
+            SPORTZ
+        </title>
+        <link rel="stylesheet" type="text/css" href="loader.css">
+        <div style="display: inline-block; margin-left: 8px; margin-top: 10px;" class="loader" id="loader"></div>
+    </head>
+    <body>
+        <body onload="loadServers()">
+            <div>
+                <table id="players">
+                </table>
+            </div>
+        </body>
+    </body>
+</html>

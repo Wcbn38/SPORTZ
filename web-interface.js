@@ -10,12 +10,17 @@ var webPagesProperties = {
     "index.html": [wp.sendWebPage],
     "server-board.html": [wp.isAdmin, wp.sendWebPage],
     "game-board.html": [wp.isAdmin, wp.sendWebPage],
-    "auth.html": [wp.authUserPrms, wp.sendWebPage]
+    "auth.html": [wp.authUserPrms, wp.sendWebPage],
+    "user.html": [wp.isUserAuthorized, wp.sendWebPage]
 }
 
 var postRequestsProperties = {
     "game-servers": [wp.isAdmin, wp.sendAvailableServers],
-    "game-properties": [wp.isAdmin, wp.sendGameProperties]
+    "game-properties": [wp.isAdmin, wp.sendGameProperties],
+    "game-start": [wp.isAdmin, wp.startGame],
+    "user-game-properties": [wp.isUserAuthorized, wp.sendUserGameProperties],
+    "user-vote-request": [wp.isUserAuthorized, wp.setUserVote],
+    "game-status": [wp.isAdmin, wp.setVoteStatus]
 }
 
 async function serverAccessHandle(req, res) {
@@ -111,3 +116,19 @@ https.createServer({
         }
     }
 ).listen(443)
+
+export async function collectRequestData(req) {
+    let body = '';
+
+    req.on('data', chunk => {
+        body += chunk.toString();
+    });
+
+    let bodyPromise = new Promise((resolve, reject) => {
+        req.on('end', () => {
+            resolve(body);
+        });
+    });
+
+    return await bodyPromise;
+}
