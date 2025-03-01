@@ -30,11 +30,14 @@
             header.appendChild(document.createElement("th")).innerHTML = "Vote"
             header.appendChild(document.createElement("th")).innerHTML = "Voted"
 
+            idPlayer = {}
+            json["members"].forEach(el => idPlayer[el["id"]] = el["username"])
+
             json["members"].forEach(el => {
                 const playerEl = document.createElement("tr")
 
                 playerEl.appendChild(document.createElement("th")).innerHTML = el["username"]
-                playerEl.appendChild(document.createElement("td")).innerHTML = el["vote"]
+                playerEl.appendChild(document.createElement("td")).innerHTML = idPlayer[el["vote"]] !== undefined ? idPlayer[el["vote"]] : "Blank"
                 playerEl.appendChild(document.createElement("td")).innerHTML = json["members"].map(e => e['vote'] == el['id']).filter(e => e).length
 
                 if (el["dead"]) {
