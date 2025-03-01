@@ -1,6 +1,5 @@
 import * as djs from 'discord.js'
 import * as cfg from './cfg.js'
-import * as gdb from './game-db.js'
 
 export const discordClient = new djs.Client({ intents: [djs.GatewayIntentBits.Guilds, djs.GatewayIntentBits.GuildMembers] })
 

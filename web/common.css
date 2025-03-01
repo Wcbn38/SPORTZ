@@ -1,0 +1,9 @@
+.greyed {
+    color: grey;
+}
+
+table, th, td {
+    border: 1px solid black;
+    min-width: 250px;
+    text-align: center;
+}

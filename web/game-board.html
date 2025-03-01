@@ -21,6 +21,7 @@
         .then((json) => {
             document.getElementById("loader").style.display = 'none'
 
+            // Add players:
             playerSection = document.getElementById("players")
             playerSection.innerHTML = ''
 
@@ -29,12 +30,12 @@
             header.appendChild(document.createElement("th")).innerHTML = "Vote"
             header.appendChild(document.createElement("th")).innerHTML = "Voted"
 
-            json.forEach(el => {
+            json["members"].forEach(el => {
                 const playerEl = document.createElement("tr")
 
                 playerEl.appendChild(document.createElement("th")).innerHTML = el["username"]
                 playerEl.appendChild(document.createElement("td")).innerHTML = el["vote"]
-                playerEl.appendChild(document.createElement("td")).innerHTML = json.map(e => e['vote'] == el['id']).filter(e => e).length
+                playerEl.appendChild(document.createElement("td")).innerHTML = json["members"].map(e => e['vote'] == el['id']).filter(e => e).length
 
                 if (el["dead"]) {
                     playerEl.classList.add("greyed")
@@ -46,22 +47,50 @@
             let blankVote = playerSection.appendChild(document.createElement("tr"))
             blankVote.appendChild(document.createElement("th")).innerHTML = "Blank"
             blankVote.appendChild(document.createElement("td")).innerHTML = "N/A"
-            blankVote.appendChild(document.createElement("td")).innerHTML = json.map(e => e['vote'] == null).filter(e => e).length
+            blankVote.appendChild(document.createElement("td")).innerHTML = json["members"].map(e => e['vote'] == null).filter(e => e).length
 
             playerSection.appendChild(blankVote)
+
+            //Add roles
+            let createRoll = (e) => {
+                let newRole = document.createElement("option")
+                newRole.value = e['id']
+                newRole.innerHTML = e['name']
+                return newRole
+            }
+
+            let playingRoleSection = document.getElementById("playing-role")
+            let deathRoleSection = document.getElementById("death-role")
+
+            if (!playingRoleSection.disabled) {
+                playingRoleSection.innerHTML = ''
+                json["roles"].forEach(e => playingRoleSection.appendChild(createRoll(e)))
+            }
+            
+            if (!deathRoleSection.disabled) {
+                deathRoleSection.innerHTML = ''
+                json["roles"].forEach(e => deathRoleSection.appendChild(createRoll(e)))
+            }
         });
     }
 
     function startGame() {
         fetch(`${document.location.origin}/game-start?gameid=${argsMap["gameid"]}`, {
             method: "POST",
-            body: "",
+            body: JSON.stringify({
+                "playing_role": document.getElementById("playing-role").value,
+                "death_role": document.getElementById("death-role").value
+            }),
             headers: {
                 "Content-type": "text/plain; charset=UTF-8",
                 "Content-Length": 0,
                 "Cookies": cookieMap["pwd"]
             }
         })
+
+        document.getElementById("start-game-button").disabled = true;
+        document.getElementById("playing-role").disabled = true;
+        document.getElementById("death-role").disabled = true;
     }
 
     function setVoteEnable(value) {
@@ -83,8 +112,19 @@
         </title>
         <link rel="stylesheet" type="text/css" href="loader.css">
         <link rel="stylesheet" type="text/css" href="admin-general.css">
-        <div style="padding: 20px; width: 500px; display: grid; grid-template-columns: auto auto auto auto auto;">
-            <button onclick="startGame()" style="width: 120px; margin: 15px;">Start game</button>
+        <link rel="stylesheet" type="text/css" href="common.css">
+        <div style="padding: 0px; width: 800px; display: grid; grid-template-columns: auto auto auto; align-items: center;">
+            <button onclick="startGame()" style="width: 120px; margin: 15px;" id="start-game-button">Start game</button>
+            <div>
+                <label for="playing-role">Playing role:</label>
+                <select name="playing-role" id="playing-role"></select>
+            </div>
+            <div>
+                <label for="death-role">Death role:</label>
+                <select name="death-role" id="death-role"></select>
+            </div>
+        </div>
+        <div style="padding: 0px; width: 600px; display: grid; grid-template-columns: auto auto auto auto;">
             <button onclick="setVoteEnable(true)" style="width: 120px; margin: 15px; background-color: green;">Start vote</button>
             <button onclick="setVoteEnable(false)" style="width: 120px; margin: 15px; background-color: red;">End vote</button>
             <button onclick="loadServers()" style="width: 120px; margin: 15px;">Refresh</button>

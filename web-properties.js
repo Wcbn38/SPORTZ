@@ -98,16 +98,26 @@ export async function sendGameProperties(req, res) {
     }
 
     webi.scheduledWriteData.push(async () => {
-        return JSON.stringify((await guild.members.fetch()).filter(e => e.id != dsc.discordClient.user.id).map(e => {
-            return {
-                "id": e.id,
-                "username": e.displayName,
-                "dead": false,
-                "vote": db.game_list[prms["gameid"]] !== undefined ? 
-                    (db.game_list[prms["gameid"]]["members"][e.id] !== undefined ? db.game_list[prms["gameid"]]["members"][e.id]["vote"] : "N/A")
-                    : "N/A"
+        return JSON.stringify(
+            {
+                "members": (await guild.members.fetch()).filter(e => e.id != dsc.discordClient.user.id).map(e => {
+                    return {
+                        "id": e.id,
+                        "username": e.displayName,
+                        "dead": db.game_list[prms["gameid"]] !== undefined ? e.roles.cache.some(r => r.id == db.game_list[prms["gameid"]]["dead-role"]) : false,
+                        "vote": db.game_list[prms["gameid"]] !== undefined ? 
+                            (db.game_list[prms["gameid"]]["members"][e.id] !== undefined ? db.game_list[prms["gameid"]]["members"][e.id]["vote"] : "N/A")
+                            : "N/A"
+                    }
+                }),
+                "roles": (await guild.roles.fetch()).map(e => {
+                    return {
+                        "id": e.id,
+                        "name": e.name
+                    }
+                })
             }
-        }))
+            )
     })
 
     return 200
@@ -131,7 +141,15 @@ export async function startGame(req, res) {
 
     db.createGameDb(prms["gameid"]);
 
-    (await guild.members.fetch()).filter(e => e.id != dsc.discordClient.user.id).forEach(mem => {
+    let body = JSON.parse(await webi.collectRequestData(req))
+
+    db.game_list[prms["gameid"]]["playing-role"] = body["playing_role"];
+    db.game_list[prms["gameid"]]["dead-role"] = body["death_role"];
+
+    (await guild.members.fetch())
+    .filter(e => e.id != dsc.discordClient.user.id)
+    .filter(e => e.roles.cache.some(r => r.id == db.game_list[prms["gameid"]]["playing-role"]))
+    .forEach(mem => {
         try {
             let userpass = utility.makepasswd(20)
             db.game_list[prms["gameid"]]["members"][mem.id] = {
@@ -166,13 +184,16 @@ export async function sendUserGameProperties(req, res) {
     }
 
     webi.scheduledWriteData.push(async () => {
-        return JSON.stringify((await guild.members.fetch()).filter(e => e.id != dsc.discordClient.user.id).map(e => {
+        return JSON.stringify((await guild.members.fetch())
+        .filter(e => e.id != dsc.discordClient.user.id)
+        .filter(e => e.roles.cache.some(r => r.id == db.game_list[prms["gameid"]]["playing-role"]))
+        .map(e => {
             if (db.game_list[prms["gameid"]]["members"][e.id] === undefined) return
 
             return {
                 "id": e.id,
                 "username": e.displayName,
-                "dead": false
+                "dead": e.roles.cache.some(r => r.id == db.game_list[prms["gameid"]]["dead-role"])
             }
         }))
     })
