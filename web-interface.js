@@ -23,10 +23,40 @@ var postRequestsProperties = {
     "game-status": [wp.isAdmin, wp.setVoteStatus]
 }
 
+var eventProperties = {
+    "user-evt-src": [wp.isUserAuthorized, wp.handleVotingEventRq]
+}
+
 async function serverAccessHandle(req, res) {
     scheduledWriteData = []
     req.url = req.url.substring(1) // remove starting '/'
-    if (req.method == 'GET') {
+
+    if (req.headers['accept'] !== undefined && req.headers['accept'] == 'text/event-stream') {
+        const [page_path, query_prms] = utility.extractPagePrms(req)
+        if(eventProperties[page_path] !== undefined) {
+            let returnCode = 200
+
+            for await (let el of eventProperties[page_path]) {
+                returnCode = await el(req, res)
+                if (returnCode > 300 || returnCode < 200) {
+                    break
+                }
+            }
+
+            res.writeHead(returnCode)
+
+            try {
+                for await (let el of scheduledWriteData) {
+                    res.write(await el())
+                }
+            } catch (e) {
+                console.log("[ERROR] Exception found during server handling:")
+                console.log(e)
+            }
+        } else {
+            res.writeHead(404)
+        }
+    } else if (req.method == 'GET') {
         if (req.url != "" && req.url != "/") {
             if (req.url.includes('..')) {
                 console.log(`Detected security issue [ACCESS_FILE_REDIRECTED] from ip ${req.socket.remoteAddress}. URL is '${req.url}'`)

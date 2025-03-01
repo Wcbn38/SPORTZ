@@ -11,7 +11,7 @@ export function generateErrorPage(str) {
 
 export function isAdmin(req, res) {
     let rqHeaders = req.headers
-    if (rqHeaders !== undefined && rqHeaders['cookie'] !== undefined) {
+    if (rqHeaders['cookie'] !== undefined) {
         let cookies = utility.mapWebPrms(rqHeaders['cookie'])
 
         if (cookies['pwd'] == cfg.sec_pwd) {
@@ -136,7 +136,8 @@ export async function startGame(req, res) {
             let userpass = utility.makepasswd(20)
             db.game_list[prms["gameid"]]["members"][mem.id] = {
                 "pass": userpass,
-                "vote": null
+                "vote": null,
+                "update": false
             }
 
             mem.send(`A game has started for you in server *${guild.name}*. You can connect to your voting page [here](${cfg.sec_cfg.domain.nameserver}/user.html?gameid=${prms["gameid"]}&userid=${mem.id}&pwd=${userpass}).`)
@@ -210,8 +211,35 @@ export async function setVoteStatus(req, res) {
 
     if (prms["enabled"] == "true" || prms["enabled"] == "false" && db.game_list[prms["gameid"]] !== undefined) {
         db.game_list[prms["gameid"]]["vote-ongoing"] = prms["enabled"] == "true"
+
+        if (db.game_list[prms["gameid"]]["vote-ongoing"]) {
+            for (let e in db.game_list[prms["gameid"]]["members"]) {
+                db.game_list[prms["gameid"]]["members"][e]["update"] = true
+            }
+        }
+
         return 200
     }
 
     return 401
+}
+
+export function handleVotingEventRq(req, res) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const [page_path, query_prms] = utility.extractPagePrms(req)
+    let prms = utility.mapWebPrms(query_prms)
+
+    if (db.game_list[prms['gameid']]["members"][prms['userid']]["update"] == true) {
+        webi.scheduledWriteData.push(() => "data: update\n\n")
+        db.game_list[prms['gameid']]["members"][prms['userid']]["update"] = false
+    }
+
+    req.on('close', () => {
+        res.end();
+    });
+
+    return 200
 }
