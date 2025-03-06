@@ -176,6 +176,11 @@ export async function sendUserGameProperties(req, res) {
         return 404
     }
 
+    if (db.game_list[prms["gameid"]] === undefined) {
+        webi.scheduledWriteData.push(() => generateErrorPage("No game for game id found."))
+        return 404
+    }
+
     let guild = await dsc.getDiscordGuilds().fetch(prms["gameid"])
 
     if (guild === undefined) {
@@ -184,18 +189,20 @@ export async function sendUserGameProperties(req, res) {
     }
 
     webi.scheduledWriteData.push(async () => {
-        return JSON.stringify((await guild.members.fetch())
-        .filter(e => e.id != dsc.discordClient.user.id)
-        .filter(e => e.roles.cache.some(r => r.id == db.game_list[prms["gameid"]]["playing-role"]))
-        .map(e => {
-            if (db.game_list[prms["gameid"]]["members"][e.id] === undefined) return
-
-            return {
-                "id": e.id,
-                "username": e.displayName,
-                "dead": e.roles.cache.some(r => r.id == db.game_list[prms["gameid"]]["dead-role"])
-            }
-        }))
+        return JSON.stringify({
+            "vote-open": db.game_list[prms["gameid"]]["vote-ongoing"],
+            "players": (await guild.members.fetch())
+                .filter(e => e.id != dsc.discordClient.user.id)
+                .filter(e => e.roles.cache.some(r => r.id == db.game_list[prms["gameid"]]["playing-role"]))
+                .map(e => {
+                    if (db.game_list[prms["gameid"]]["members"][e.id] === undefined) return {}
+                    else return {
+                        "id": e.id,
+                        "username": e.displayName,
+                        "dead": e.roles.cache.some(r => r.id == db.game_list[prms["gameid"]]["dead-role"])
+                    }
+                })
+        })
     })
 
     return 200
@@ -231,13 +238,16 @@ export async function setVoteStatus(req, res) {
     let prms = utility.mapWebPrms(query_prms)
 
     if (prms["enabled"] == "true" || prms["enabled"] == "false" && db.game_list[prms["gameid"]] !== undefined) {
-        db.game_list[prms["gameid"]]["vote-ongoing"] = prms["enabled"] == "true"
-
-        if (db.game_list[prms["gameid"]]["vote-ongoing"]) {
+        let newVoteStatus = prms["enabled"] == "true"
+        
+        if (db.game_list[prms["gameid"]]["vote-ongoing"] != newVoteStatus) {
             for (let e in db.game_list[prms["gameid"]]["members"]) {
                 db.game_list[prms["gameid"]]["members"][e]["update"] = true
             }
         }
+
+        db.game_list[prms["gameid"]]["vote-ongoing"] = newVoteStatus
+
 
         return 200
     }

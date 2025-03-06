@@ -46,10 +46,20 @@
         .then((json) => {
             document.getElementById("loader").style.display = 'none'
 
+            
+            if (json["vote-open"]) {
+                document.getElementById("closed-vote-message").style.display = 'none'
+                document.getElementById("open-vote-message").style.display = 'block'
+            } else {
+                document.getElementById("closed-vote-message").style.display = 'block'
+                document.getElementById("open-vote-message").style.display = 'none'
+            }
+                
+
             let playerSection = document.getElementById("players")
             playerSection.innerHTML = ''
 
-            json.forEach(el => {
+            json["players"].forEach(el => {
                 const playerEl = document.createElement("tr")
 
                 let voteSelector = document.createElement("input")
@@ -83,6 +93,14 @@
     </head>
     <body>
         <body onload="loadPlayers()">
+            <div>
+                <strong style="color: red; display: none;" id="closed-vote-message">
+                    Vote is closed.
+                </strong>
+                <strong style="color: green; display: none;" id="open-vote-message">
+                    Vote is open.
+                </strong>
+            </div>
             <div>
                 <table id="players">
                 </table>
