@@ -2,8 +2,19 @@
     color: grey;
 }
 
-table, th, td {
+table {
     border: 1px solid black;
     min-width: 250px;
     text-align: center;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid black;
+    min-width: 250px;
+    text-align: center;
+}
+
+.shrink {
+    min-width: 0px;
 }

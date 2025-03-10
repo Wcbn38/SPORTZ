@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <script src="/utilities.js"></script>
 <script>
+    var argsMap = mapWebPrms(document.location.href.split('?')[1])
+
+    function openUserVotePage(voteBtn) {
+        const url = `${document.location.origin}/user.html?gameid=${argsMap["gameid"]}&userid=${voteBtn.originalTarget.value}&pwd=${voteBtn.originalTarget.getAttribute("pwd")}`
+        window.open(url, "_blank").focus()
+    }
+
     function loadServers() {
         document.getElementById("loader").style.display = 'block'
         cookieMap = mapWebPrms(document.cookie)
@@ -29,6 +36,10 @@
             header.appendChild(document.createElement("th")).innerHTML = "Name"
             header.appendChild(document.createElement("th")).innerHTML = "Vote"
             header.appendChild(document.createElement("th")).innerHTML = "Voted"
+            
+            let buttonColumn = document.createElement("th")
+            buttonColumn.classList.add("shrink")
+            header.appendChild(buttonColumn).innerHTML = ""
 
             idPlayer = {}
             json["members"].forEach(el => idPlayer[el["id"]] = el["username"])
@@ -36,9 +47,26 @@
             json["members"].forEach(el => {
                 const playerEl = document.createElement("tr")
 
+                const votePageCell = document.createElement("td")
+                votePageCell.classList.add("shrink")
+
+                const votePageButton = document.createElement("button")
+                votePageButton.innerHTML = ">"
+                votePageButton.value = el["id"]
+                votePageButton.setAttribute("pwd", el["pwd"])
+                votePageButton.onclick = openUserVotePage
+
+                votePageCell.append(votePageButton)
+
+                if (el["pwd"] == "N/A") {
+                    votePageButton.classList.add("greyed")
+                    votePageButton.disabled = true
+                }
+
                 playerEl.appendChild(document.createElement("th")).innerHTML = el["username"]
                 playerEl.appendChild(document.createElement("td")).innerHTML = idPlayer[el["vote"]] !== undefined ? idPlayer[el["vote"]] : "Blank"
                 playerEl.appendChild(document.createElement("td")).innerHTML = json["members"].map(e => e['vote'] == el['id']).filter(e => e).length
+                playerEl.appendChild(votePageCell)
 
                 if (el["dead"]) {
                     playerEl.classList.add("greyed")

@@ -107,7 +107,8 @@ export async function sendGameProperties(req, res) {
                         "dead": db.game_list[prms["gameid"]] !== undefined ? e.roles.cache.some(r => r.id == db.game_list[prms["gameid"]]["dead-role"]) : false,
                         "vote": db.game_list[prms["gameid"]] !== undefined ? 
                             (db.game_list[prms["gameid"]]["members"][e.id] !== undefined ? db.game_list[prms["gameid"]]["members"][e.id]["vote"] : "N/A")
-                            : "N/A"
+                            : "N/A",
+                        "pwd": db.game_list[prms["gameid"]] !== undefined ? db.game_list[prms["gameid"]]["members"][e.id]["pass"] : "N/A"
                     }
                 }),
                 "roles": (await guild.roles.fetch()).map(e => {
